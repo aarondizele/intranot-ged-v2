@@ -1,0 +1,18 @@
+{
+  "background_color": "#065fad",
+  "description": "A supercharged version of Intranot GED: scan, index and archive all your physical documents",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "256x256"
+    },
+    {
+      "src": "assets/logo-notext.svg",
+      "sizes": "any"
+    }
+  ],
+  "name": "Intranot GED",
+  "short_name": "Intranot GED",
+  "start_url": "/"
+}

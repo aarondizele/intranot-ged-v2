@@ -1,0 +1,198 @@
+body {
+	--bs-body-bg: #f5f5f5;
+	--bs-link-color-rgb: 6, 95, 173;
+	/* #065fad */
+	--bs-link-hover-color-rgb: 4, 63, 115;
+	/* A darker shade for hover */
+	--pngx-primary: #065fad;
+	--pngx-primary-hover: #043f73;
+	/* A darker shade for hover */
+	--pngx-primary-active: #03305a;
+	/* An even darker shade for active */
+
+	background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+		url(./login-background.jpg) no-repeat center center fixed;
+	background-size: cover;
+}
+
+.logo {
+	height: auto;
+}
+
+.byline {
+	font-size: 0.6rem;
+	letter-spacing: 0.1rem;
+}
+
+.text-primary {
+	color: var(--pngx-primary) !important;
+}
+
+.form-control {
+	--bs-body-bg: #fff;
+}
+
+.btn.btn-primary {
+	--bs-btn-bg: var(--pngx-primary);
+	--bs-btn-border-color: var(--pngx-primary);
+	--bs-btn-hover-bg: var(--pngx-primary-hover);
+	--bs-btn-hover-border-color: #03305a;
+	/* Matching the active color or a slightly darker hover border */
+	--bs-btn-active-bg: var(--pngx-primary-active);
+	--bs-btn-active-border-color: #02213d;
+	/* Even darker border for active */
+}
+
+.btn-link {
+	--bs-btn-color: var(--pngx-primary);
+	--bs-btn-hover-color: var(--pngx-primary-hover);
+	--bs-btn-active-color: var(--pngx-primary-active);
+}
+
+.form-accounts {
+	max-width: 330px;
+	min-width: 300px;
+}
+
+.form-stacked-top input {
+	margin-bottom: -1px;
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+.form-stacked-middle input {
+	margin-bottom: -1px;
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+.form-stacked-bottom input {
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+}
+
+.form-accounts .form-floating input:focus {
+	position: relative;
+	z-index: 100;
+}
+
+.form-accounts .form-floating input:focus~label {
+	z-index: 101;
+}
+
+@media (prefers-color-scheme: dark) {
+
+	/* From theme_dark.scss */
+	body {
+		--bs-body-bg: #161618;
+		--bs-body-color: #abb2bf;
+		--bs-body-color-rgb: 171, 178, 191;
+		--bs-border-color: #47494f;
+	}
+
+	.form-control,
+	.form-floating {
+		--bs-body-bg: #1c1c1f;
+	}
+
+	svg.logo .text {
+		fill: #abb2bf !important;
+	}
+
+	.byline {
+		color: #abb2bf;
+	}
+}
+
+/* Adjustments to the centering container from base.html */
+/* This ensures the form and social links are correctly centered within the new full-page background */
+.position-absolute.top-50.start-50.translate-middle {
+	/* Override base.html's absolute positioning for a flexible centered layout */
+	position: relative;
+	/* Change from absolute for easier flexbox use */
+	transform: none !important;
+	/* Remove translate-middle to allow flexbox centering */
+	top: auto !important;
+	/* Reset top */
+	left: auto !important;
+	/* Reset left */
+	width: 100%;
+	/* Take full width to allow flex items to center */
+	min-height: 100vh;
+	/* Ensure it takes full viewport height */
+	display: flex;
+	/* Use flexbox for centering its children */
+	flex-direction: column;
+	/* Stack children (form and social accounts) vertically */
+	align-items: center;
+	/* Center horizontally */
+	justify-content: center;
+	/* Center vertically */
+	padding: 20px;
+	/* Add some overall padding around the content */
+}
+
+/* Apply card styling to the main form element */
+.form-accounts {
+	z-index: 1000 !important;
+	background-color: #fff !important;
+	/* White background for the card */
+	border-radius: 8px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	padding: 30px;
+	/* Internal spacing */
+	width: 100%;
+	max-width: 400px;
+	/* Max width for the card */
+	margin-bottom: 20px;
+	/* Ensure no default background */
+	border: none;
+	/* Ensure no default border */
+	margin-top: 0;
+	/* Remove any top margin */
+	margin-left: auto;
+	/* Center horizontally within the flex container */
+	margin-right: auto;
+	/* Center horizontally within the flex container */
+}
+
+/* Adjust the logo (which is inside the form/card) for spacing */
+.form-accounts .logo {
+	margin-bottom: 20px;
+	/* Add space below the logo within the card */
+}
+
+/* Ensure messages and errors inside the form also respect the card's width */
+.form-accounts .alert {
+	width: 100%;
+	/* Make alerts fill the width of the card */
+	margin-bottom: 1rem;
+	/* Standard Bootstrap spacing */
+	text-align: center;
+	/* Center alert text */
+}
+
+/* Optional: Adjust form-floating labels for better contrast on white background */
+.form-floating label {
+	color: #6c757d;
+	/* A slightly darker gray for labels */
+}
+
+/* Optional: Adjust input borders if needed */
+.form-control {
+	border-color: #ced4da;
+}
+
+.background-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.25);
+	/* Semi-transparent black overlay */
+	z-index: -1;
+	/* Behind all other content */
+}

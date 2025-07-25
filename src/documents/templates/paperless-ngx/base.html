@@ -1,0 +1,68 @@
+<!doctype html>
+{% load static i18n %}
+
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="robots" content="noindex,nofollow">
+
+	<title>
+		{% block head_title %}
+		{% endblock head_title %}
+	</title>
+	<link href="{% static 'bootstrap.min.css' %}" rel="stylesheet">
+	<link href="{% static 'base.css' %}" rel="stylesheet">
+
+</head>
+
+<body class="text-center">
+	<div class="background-overlay"></div>
+	<div class="position-absolute top-50 start-50 translate-middle">
+		<form class="form-accounts" id="form-account" method="post">
+			{% csrf_token %}
+
+			<div class='logo mb-4'>
+				{% include "paperless-ngx/snippets/svg_logo.html" with extra_attrs="width='300'" %}
+			</div>
+
+			{% for message in messages %}
+			<div class="alert alert-{{ message.level_tag }}" role="alert">
+				{{ message }}
+			</div>
+			{% endfor %}
+			{% block form_top_content %}
+			{% endblock form_top_content %}
+			{% if form.errors %}
+			<div class="alert alert-danger" role="alert">
+				{% for field, errors in form.errors.items %}
+				{% for error in errors %}
+				{{ error }}
+				{% endfor %}
+				{% endfor %}
+			</div>
+			{% elif request.GET.sharelink_notfound %}
+			<div class="alert alert-danger" role="alert">
+				{% translate "Share link was not found." %}
+			</div>
+			{% elif request.GET.sharelink_expired %}
+			<div class="alert alert-danger" role="alert">
+				{% translate "Share link has expired." %}
+			</div>
+			{% endif %}
+
+			{% block form_content %}
+			{% endblock form_content %}
+		</form>
+		{% block after_form_content %}
+		{% endblock after_form_content %}
+
+		<footer class="mt-4 text-center text-white small px-4" style="z-index: 100!important;">
+			<p style="font-weight: 600; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);">Développé par la société HOLOGRAM</p>
+			<img src="{% static 'assets/hids-logo.webp' %}" alt="" class="img-fluid mt-1 mx-auto d-block" style="max-width: 80px;" />
+		</footer>
+	</div>
+</body>
+
+</html>
