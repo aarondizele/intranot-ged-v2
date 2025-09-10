@@ -2,6 +2,14 @@ from django.conf import settings
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
+
+# Import the form for assigning validation tasks
+from .forms import AssignValidationTaskForm  # Import the new form
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.contrib import messages
+
+
 from documents.models import Correspondent
 from documents.models import CustomField
 from documents.models import CustomFieldInstance
@@ -14,6 +22,7 @@ from documents.models import SavedViewFilterRule
 from documents.models import ShareLink
 from documents.models import StoragePath
 from documents.models import Tag
+from documents.models import ValidationTask
 
 if settings.AUDIT_LOG_ENABLED:
     from auditlog.admin import LogEntryAdmin
@@ -64,6 +73,8 @@ class DocumentAdmin(GuardedModelAdmin):
         ("archive_filename", admin.EmptyFieldListFilter),
     )
 
+    actions = ['assign_validation_task']  # Add this if not present
+
     filter_horizontal = ("tags",)
 
     ordering = ["-id"]
@@ -104,6 +115,56 @@ class DocumentAdmin(GuardedModelAdmin):
 
         index.add_or_update_document(obj)
         super().save_model(request, obj, form, change)
+
+    def assign_validation_task(self, request, queryset):
+        if 'apply' in request.POST:
+            form = AssignValidationTaskForm(request.POST)
+            if form.is_valid():
+                assigned_to = form.cleaned_data['assigned_to']
+                tag = form.cleaned_data['tag']
+                note = form.cleaned_data['note']
+                selected_ids = request.POST.getlist('_selected_action')
+
+                # Create the task
+                task = ValidationTask.objects.create(
+                    assigned_to=assigned_to,
+                    created_by=request.user,
+                    tag=tag,
+                    note=note,
+                    due_date=tag.due_date if tag else None  # Set from tag
+                )
+                # Link selected documents
+                documents = Document.objects.filter(pk__in=selected_ids)
+                task.documents.set(documents)
+                # Optional: Assign tag to each document
+                for doc in documents:
+                    doc.tags.add(tag)
+                    doc.save()
+
+                messages.success(request, f"Validation task created for {documents.count()} documents.")
+                return HttpResponseRedirect('.')
+        else:
+            initial = {
+                '_selected_action': request.POST.getlist('_selected_action'),
+                'assigned_to': request.user,  # Default to current user
+            }
+            form = AssignValidationTaskForm(initial=initial)
+
+        context = {
+            'form': form,
+            'documents': queryset,
+            'title': 'Assign Validation Task',
+        }
+        return render(request, 'admin/assign_validation_task.html', context)
+
+    assign_validation_task.short_description = "Assign validation task to selected documents"
+
+# Optional: Inline for viewing tasks in Document admin (shows linked tasks)
+class ValidationTaskInline(admin.TabularInline):
+    model = ValidationTask.documents.through  # For M2M inline
+    extra = 0
+    verbose_name = "Linked Validation Task"
+    verbose_name_plural = "Linked Validation Tasks"
 
 
 class RuleInline(admin.TabularInline):
@@ -212,3 +273,30 @@ if settings.AUDIT_LOG_ENABLED:
 
     admin.site.unregister(LogEntry)
     admin.site.register(LogEntry, LogEntryAUDIT)
+
+@admin.register(ValidationTask)
+class ValidationTaskAdmin(admin.ModelAdmin):
+    list_display = ['tag', 'assigned_to', 'due_date', 'status', 'created_by', 'created_at', 'get_documents_count']
+    list_filter = ['status', 'due_date', 'assigned_to', 'created_by', 'tag']
+    search_fields = ['note', 'assigned_to__username', 'tag__name']
+    filter_horizontal = ['documents']  # For easy M2M selection in admin
+    raw_id_fields = ['assigned_to', 'created_by', 'tag']
+    date_hierarchy = 'created_at'
+
+    def get_documents_count(self, obj):
+        return obj.documents.count()
+    get_documents_count.short_description = 'Documents'
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser:
+            if request.user.groups.filter(name='Staff').exists():
+                return qs.filter(created_by=request.user) | qs.filter(assigned_to=request.user)
+            else:
+                return qs.none()
+        return qs
+
+    def has_add_permission(self, request):
+        if request.user.is_superuser or request.user.groups.filter(name='Staff').exists():
+            return True
+        return False

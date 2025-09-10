@@ -45,6 +45,8 @@ from documents.views import UnifiedSearchViewSet
 from documents.views import WorkflowActionViewSet
 from documents.views import WorkflowTriggerViewSet
 from documents.views import WorkflowViewSet
+from documents.views import ValidationTaskViewSet  # --- ValidationTaskViewSet ---
+
 from paperless.consumers import StatusConsumer
 from paperless.views import ApplicationConfigurationViewSet
 from paperless.views import DisconnectSocialAccountView
@@ -79,6 +81,7 @@ api_router.register(r"workflow_actions", WorkflowActionViewSet)
 api_router.register(r"workflows", WorkflowViewSet)
 api_router.register(r"custom_fields", CustomFieldViewSet)
 api_router.register(r"config", ApplicationConfigurationViewSet)
+api_router.register(r'validation_tasks', ValidationTaskViewSet, basename='validationtask')
 
 
 urlpatterns = [
@@ -367,8 +370,8 @@ websocket_urlpatterns = [
 ]
 
 # Text in each page's <h1> (and above login form).
-admin.site.site_header = "Intranot GED"
+admin.site.site_header = "HIDS GED"
 # Text at the end of each page's <title>.
-admin.site.site_title = "Intranot GED"
+admin.site.site_title = "HIDS GED"
 # Text at the top of the admin index page.
-admin.site.index_title = _("Intranot GED administration")
+admin.site.index_title = _("HIDS GED administration")

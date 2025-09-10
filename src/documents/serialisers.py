@@ -56,6 +56,7 @@ from documents.models import WorkflowAction
 from documents.models import WorkflowActionEmail
 from documents.models import WorkflowActionWebhook
 from documents.models import WorkflowTrigger
+from documents.models import ValidationTask
 from documents.parsers import is_mime_type_supported
 from documents.permissions import get_groups_with_only_permission
 from documents.permissions import set_permissions_for_object
@@ -508,6 +509,7 @@ class TagSerializerVersion1(MatchingModelSerializer, OwnedObjectSerializer):
             "slug",
             "name",
             "colour",
+            "due_date",
             "match",
             "matching_algorithm",
             "is_insensitive",
@@ -542,6 +544,7 @@ class TagSerializer(MatchingModelSerializer, OwnedObjectSerializer):
             "id",
             "slug",
             "name",
+            "due_date",
             "color",
             "text_color",
             "match",
@@ -1622,7 +1625,7 @@ class PostDocumentSerializer(serializers.Serializer):
     )
 
     from_webui = serializers.BooleanField(
-        label="Documents are from Intranot GED WebUI",
+        label="Documents are from HIDS GED WebUI",
         write_only=True,
         required=False,
     )
@@ -2371,3 +2374,16 @@ class StoragePathTestSerializer(SerializerWithPerms):
         label="Document",
         write_only=True,
     )
+
+
+class ValidationTaskSerializer(serializers.ModelSerializer):
+    document_title = serializers.SerializerMethodField()
+    assigned_to_username = serializers.ReadOnlyField(source='assigned_to.username')
+    documents = serializers.PrimaryKeyRelatedField(many=True, queryset=Document.objects.all())
+
+    class Meta:
+        model = ValidationTask
+        fields = ['id', 'documents', 'document_title', 'tag', 'assigned_to', 'assigned_to_username', 'created_by', 'due_date', 'note', 'status', 'created_at', 'completed_at']
+
+    def get_document_title(self, obj):
+        return ", ".join([doc.title for doc in obj.documents.all()])

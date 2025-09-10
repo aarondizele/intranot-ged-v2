@@ -2918,3 +2918,46 @@ class TrashView(ListModelMixin, PassUserMixin):
                 doc_ids = [doc.id for doc in docs]
             empty_trash(doc_ids=doc_ids)
         return Response({"result": "OK", "doc_ids": doc_ids})
+
+
+# --- ValidationTaskViewSet ---
+from documents.models import ValidationTask
+from documents.serialisers import ValidationTaskSerializer
+from documents.filters import ValidationTaskFilter
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework import filters
+
+class ValidationTaskViewSet(ModelViewSet):
+    queryset = ValidationTask.objects.all()
+    serializer_class = ValidationTaskSerializer
+    permission_classes = [IsAuthenticated]  # Or more restrictive, e.g., IsAdminUser for creation
+    pagination_class = LimitOffsetPagination  # Supports ?limit=10&offset=0
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = ValidationTaskFilter  # Enables advanced filters from above
+    search_fields = ['note', '^tag__name', '=assigned_to__username']  # ^ for starts-with, = for exact
+    ordering_fields = ['due_date', 'created_at', 'status']  # e.g., ?ordering=due_date,-created_at
+    ordering = ['-created_at']  # Default ordering
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if not user.is_superuser:
+            # Restrict to tasks created by or assigned to the user (or Staff group)
+            if user.groups.filter(name='Staff').exists():
+                queryset = queryset.filter(created_by=user) | queryset.filter(assigned_to=user)
+            else:
+                queryset = queryset.none()
+        return queryset
+
+    # Optional: Custom action for marking tasks complete (e.g., PATCH /api/validation-tasks/{id}/complete/)
+    from rest_framework.decorators import action
+    from rest_framework.response import Response
+    from django.utils import timezone
+
+    @action(detail=True, methods=['patch'])
+    def complete(self, request, pk=None):
+        task = self.get_object()
+        task.status = 'completed'
+        task.completed_at = timezone.now()
+        task.save()
+        return Response({'status': 'completed'})

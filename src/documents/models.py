@@ -98,6 +98,7 @@ class Correspondent(MatchingModel):
 
 class Tag(MatchingModel):
     color = models.CharField(_("color"), max_length=7, default="#a6cee3")
+    due_date = models.DateField()
 
     is_inbox_tag = models.BooleanField(
         _("is inbox tag"),
@@ -1474,3 +1475,43 @@ class WorkflowRun(models.Model):
 
     def __str__(self):
         return f"WorkflowRun of {self.workflow} at {self.run_at} on {self.document}"
+
+# Add ValidationTask
+class ValidationTask(SoftDeleteModel, ModelWithOwner):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('overdue', 'Overdue'),
+    ]
+
+    documents = models.ManyToManyField(Document, related_name='validation_tasks')
+    tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=True, related_name='validation_tasks')
+    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assigned_tasks')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_tasks')
+    due_date = models.DateField(null=True, blank=True)
+    note = models.TextField(blank=True, help_text='Additional notes for the task.')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Validation Task'
+        verbose_name_plural = 'Validation Tasks'
+
+    def __str__(self):
+        return f"Task with tag {self.tag} - Assigned to {self.assigned_to.username} (Due: {self.due_date})"
+
+    def save(self, *args, **kwargs):
+        # Set due_date from tag if not provided
+        if self.tag and self.tag.due_date and not self.due_date:
+            self.due_date = self.tag.due_date
+        # Auto-set overdue status
+        if self.due_date and self.due_date < timezone.now().date() and self.status != 'completed':
+            self.status = 'overdue'
+
+        for doc in self.documents.all(): doc.tags.add(self.tag); doc.save()
+
+        super().save(*args, **kwargs)
+

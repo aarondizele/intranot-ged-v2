@@ -964,3 +964,29 @@ class DocumentsOrderingFilter(OrderingFilter):
             )
 
         return super().filter_queryset(request, queryset, view)
+
+
+# Added for ValidationTask
+
+from django_filters import rest_framework as filters
+from django.utils import timezone
+from documents.models import ValidationTask, User
+
+class ValidationTaskFilter(filters.FilterSet):
+    due_date = filters.DateFromToRangeFilter()  # Enables ?due_date__gte=YYYY-MM-DD & ?due_date__lte=YYYY-MM-DD
+    status = filters.ChoiceFilter(choices=ValidationTask.STATUS_CHOICES)  # Exact match on status
+    status__in = filters.MultipleChoiceFilter(field_name='status', choices=ValidationTask.STATUS_CHOICES)  # e.g., ?status__in=pending,overdue
+    assigned_to = filters.ModelChoiceFilter(queryset=User.objects.all())  # ?assigned_to=UserID
+    assigned_to__username = filters.CharFilter(field_name='assigned_to__username', lookup_expr='iexact')  # Case-insensitive username match
+    tag__name = filters.CharFilter(field_name='tag__name', lookup_expr='icontains')  # Search tag names
+    documents__id__in = filters.BaseInFilter(field_name='documents__id', lookup_expr='in')  # ?documents__id__in=1,2,3 for tasks linked to specific docs
+    overdue = filters.BooleanFilter(method='filter_overdue')  # Custom: ?overdue=true to get overdue tasks
+
+    def filter_overdue(self, queryset, name, value):
+        if value:
+            return queryset.filter(due_date__lt=timezone.now().date(), status__ne='completed')
+        return queryset
+
+    class Meta:
+        model = ValidationTask
+        fields = ['status', 'due_date', 'assigned_to', 'created_by', 'tag']
