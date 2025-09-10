@@ -4,7 +4,7 @@ from guardian.admin import GuardedModelAdmin
 
 
 # Import the form for assigning validation tasks
-from .forms import AssignValidationTaskForm  # Import the new form
+from documents.forms import AssignValidationTaskForm  # Import the new form
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.contrib import messages
